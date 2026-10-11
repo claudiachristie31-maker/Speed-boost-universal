@@ -5,17 +5,17 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-
 local MIN_SPEED = 16
 local MAX_SPEED = 450
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "SpeedBoostPanel"
 gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
+-- Main panel
 local frame = Instance.new("Frame")
+frame.Name = "MainPanel"
 frame.Size = UDim2.new(0, 300, 0, 155)
 frame.AnchorPoint = Vector2.new(0.5, 0)
 frame.Position = UDim2.new(0.5, 0, 0, 100)
@@ -26,15 +26,40 @@ frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius =
     UDim.new(0, 12)
 
+-- Hide/show button (always visible)
+local toggle = Instance.new("TextButton")
+toggle.Name = "ToggleMenu"
+toggle.Size = UDim2.new(0, 110, 0, 36)
+toggle.Position = UDim2.new(1, -120, 0, 15)
+toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 220)
+toggle.TextColor3 = Color3.new(1, 1, 1)
+toggle.Text = "Hide Menu"
+toggle.TextSize = 14
+toggle.Font = Enum.Font.GothamBold
+toggle.Parent = gui
+
+Instance.new("UICorner", toggle).CornerRadius =
+    UDim.new(0, 8)
+
+local menuVisible = true
+
+toggle.Activated:Connect(function()
+    menuVisible = not menuVisible
+    frame.Visible = menuVisible
+    toggle.Text = menuVisible and "Hide Menu" or "Show Menu"
+end)
+
+-- Title
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 35)
 title.BackgroundTransparency = 1
 title.Text = "SPEED BOOST"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextColor3 = Color3.new(1, 1, 1)
 title.TextSize = 20
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
+-- Speed display
 local valueLabel = Instance.new("TextLabel")
 valueLabel.Position = UDim2.new(0, 0, 0, 38)
 valueLabel.Size = UDim2.new(1, 0, 0, 28)
@@ -44,6 +69,7 @@ valueLabel.TextSize = 18
 valueLabel.Font = Enum.Font.GothamBold
 valueLabel.Parent = frame
 
+-- Slider
 local slider = Instance.new("TextButton")
 slider.Position = UDim2.new(0, 20, 0, 85)
 slider.Size = UDim2.new(1, -40, 0, 10)
@@ -68,7 +94,7 @@ local knob = Instance.new("Frame")
 knob.Size = UDim2.new(0, 18, 0, 18)
 knob.AnchorPoint = Vector2.new(0.5, 0.5)
 knob.Position = UDim2.new(0, 0, 0.5, 0)
-knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+knob.BackgroundColor3 = Color3.new(1, 1, 1)
 knob.BorderSizePixel = 0
 knob.Parent = slider
 
@@ -118,34 +144,25 @@ local function updateFromX(x)
 end
 
 slider.InputBegan:Connect(function(input)
-    if input.UserInputType ==
-        Enum.UserInputType.MouseButton1
-        or input.UserInputType ==
-        Enum.UserInputType.Touch then
-
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         updateFromX(input.Position.X)
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if not dragging then return end
-
-    if input.UserInputType ==
-        Enum.UserInputType.MouseMovement
-        or input.UserInputType ==
-        Enum.UserInputType.Touch then
-
+    if dragging and (
+        input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch
+    ) then
         updateFromX(input.Position.X)
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType ==
-        Enum.UserInputType.MouseButton1
-        or input.UserInputType ==
-        Enum.UserInputType.Touch then
-
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
         dragging = false
     end
 end)
