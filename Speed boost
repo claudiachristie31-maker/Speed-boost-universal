@@ -2,6 +2,8 @@
 -- [made by Nickoy]
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
 local player = Players.LocalPlayer
 
 local MIN_SPEED = 16
@@ -14,7 +16,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 300, 0, 155)
-frame.Position = UDim2.new(0.5, -150, 0.7, 0)
+frame.Position = UDim2.new(0.5, -150, 0.4, 0)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 frame.Parent = gui
 
@@ -107,41 +109,37 @@ local function updateFromX(x)
         (MAX_SPEED - MIN_SPEED))
 end
 
-slider.Activated:Connect(function()
-    -- Supports clicking/tapping the slider.
-end)
-
 slider.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType ==
+        Enum.UserInputType.MouseButton1
+        or input.UserInputType ==
+        Enum.UserInputType.Touch then
+
         dragging = true
         updateFromX(input.Position.X)
     end
 end)
 
-game:GetService("UserInputService").InputChanged:Connect(
-    function(input)
-        if dragging and (
-            input.UserInputType ==
-                Enum.UserInputType.MouseMovement
-            or input.UserInputType ==
-                Enum.UserInputType.Touch
-        ) then
-            updateFromX(input.Position.X)
-        end
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (
+        input.UserInputType ==
+            Enum.UserInputType.MouseMovement
+        or input.UserInputType ==
+            Enum.UserInputType.Touch
+    ) then
+        updateFromX(input.Position.X)
     end
-)
+end)
 
-game:GetService("UserInputService").InputEnded:Connect(
-    function(input)
-        if input.UserInputType ==
-            Enum.UserInputType.MouseButton1
-            or input.UserInputType ==
-            Enum.UserInputType.Touch then
-            dragging = false
-        end
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType ==
+        Enum.UserInputType.MouseButton1
+        or input.UserInputType ==
+        Enum.UserInputType.Touch then
+
+        dragging = false
     end
-)
+end)
 
 player.CharacterAdded:Connect(function(character)
     local humanoid = character:WaitForChild("Humanoid")
