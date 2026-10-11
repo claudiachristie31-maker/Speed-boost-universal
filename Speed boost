@@ -12,12 +12,15 @@ local MAX_SPEED = 450
 local gui = Instance.new("ScreenGui")
 gui.Name = "SpeedBoostPanel"
 gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 300, 0, 155)
-frame.Position = UDim2.new(0.5, -150, 0.4, 0)
+frame.AnchorPoint = Vector2.new(0.5, 0)
+frame.Position = UDim2.new(0.5, 0, 0, 100)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+frame.BorderSizePixel = 0
 frame.Parent = gui
 
 Instance.new("UICorner", frame).CornerRadius =
@@ -55,6 +58,7 @@ Instance.new("UICorner", slider).CornerRadius =
 local fill = Instance.new("Frame")
 fill.Size = UDim2.new(0, 0, 1, 0)
 fill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+fill.BorderSizePixel = 0
 fill.Parent = slider
 
 Instance.new("UICorner", fill).CornerRadius =
@@ -65,6 +69,7 @@ knob.Size = UDim2.new(0, 18, 0, 18)
 knob.AnchorPoint = Vector2.new(0.5, 0.5)
 knob.Position = UDim2.new(0, 0, 0.5, 0)
 knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+knob.BorderSizePixel = 0
 knob.Parent = slider
 
 Instance.new("UICorner", knob).CornerRadius =
@@ -88,19 +93,22 @@ local function setSpeed(speed)
         humanoid.WalkSpeed = currentSpeed
     end
 
-    local alpha =
-        (currentSpeed - MIN_SPEED) /
+    local alpha = (currentSpeed - MIN_SPEED) /
         (MAX_SPEED - MIN_SPEED)
 
     fill.Size = UDim2.new(alpha, 0, 1, 0)
     knob.Position = UDim2.new(alpha, 0, 0.5, 0)
-    valueLabel.Text = "Speed: " .. currentSpeed .. " / 450"
+
+    valueLabel.Text =
+        "Speed: " .. currentSpeed .. " / " .. MAX_SPEED
 end
 
 local function updateFromX(x)
+    local width = slider.AbsoluteSize.X
+    if width <= 0 then return end
+
     local alpha = math.clamp(
-        (x - slider.AbsolutePosition.X) /
-        slider.AbsoluteSize.X,
+        (x - slider.AbsolutePosition.X) / width,
         0,
         1
     )
@@ -121,12 +129,13 @@ slider.InputBegan:Connect(function(input)
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and (
-        input.UserInputType ==
-            Enum.UserInputType.MouseMovement
+    if not dragging then return end
+
+    if input.UserInputType ==
+        Enum.UserInputType.MouseMovement
         or input.UserInputType ==
-            Enum.UserInputType.Touch
-    ) then
+        Enum.UserInputType.Touch then
+
         updateFromX(input.Position.X)
     end
 end)
