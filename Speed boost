@@ -6,148 +6,130 @@ local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local MIN_SPEED = 16
-local MAX_SPEED = 450
+local MAX_SPEED = 1500
+local currentSpeed = MIN_SPEED
+local dragging = false
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "SpeedBoostPanel"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Main panel
+-- Main menu
 local frame = Instance.new("Frame")
-frame.Name = "MainPanel"
+frame.Name = "MainFrame"
 frame.Size = UDim2.new(0, 300, 0, 155)
 frame.AnchorPoint = Vector2.new(0.5, 0)
 frame.Position = UDim2.new(0.5, 0, 0, 100)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 frame.BorderSizePixel = 0
 frame.Parent = gui
 
-Instance.new("UICorner", frame).CornerRadius =
-    UDim.new(0, 12)
-
--- Hide/show button (always visible)
-local toggle = Instance.new("TextButton")
-toggle.Name = "ToggleMenu"
-toggle.Size = UDim2.new(0, 110, 0, 36)
-toggle.Position = UDim2.new(1, -120, 0, 15)
-toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 220)
-toggle.TextColor3 = Color3.new(1, 1, 1)
-toggle.Text = "Hide Menu"
-toggle.TextSize = 14
-toggle.Font = Enum.Font.GothamBold
-toggle.Parent = gui
-
-Instance.new("UICorner", toggle).CornerRadius =
-    UDim.new(0, 8)
-
-local menuVisible = true
-
-toggle.Activated:Connect(function()
-    menuVisible = not menuVisible
-    frame.Visible = menuVisible
-    toggle.Text = menuVisible and "Hide Menu" or "Show Menu"
-end)
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = frame
 
 -- Title
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 35)
+title.Size = UDim2.new(1, -20, 0, 30)
+title.Position = UDim2.new(0, 10, 0, 8)
 title.BackgroundTransparency = 1
-title.Text = "SPEED BOOST"
+title.Text = "Speed Boost"
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextSize = 20
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
--- Speed display
-local valueLabel = Instance.new("TextLabel")
-valueLabel.Position = UDim2.new(0, 0, 0, 38)
-valueLabel.Size = UDim2.new(1, 0, 0, 28)
-valueLabel.BackgroundTransparency = 1
-valueLabel.TextColor3 = Color3.fromRGB(0, 220, 255)
-valueLabel.TextSize = 18
-valueLabel.Font = Enum.Font.GothamBold
-valueLabel.Parent = frame
+-- Current speed display
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(1, -20, 0, 25)
+speedLabel.Position = UDim2.new(0, 10, 0, 42)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed: " .. currentSpeed
+speedLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+speedLabel.TextSize = 15
+speedLabel.Font = Enum.Font.Gotham
+speedLabel.Parent = frame
 
--- Slider
-local slider = Instance.new("TextButton")
+-- Slider background
+local slider = Instance.new("Frame")
+slider.Size = UDim2.new(1, -40, 0, 12)
 slider.Position = UDim2.new(0, 20, 0, 85)
-slider.Size = UDim2.new(1, -40, 0, 10)
-slider.BackgroundColor3 = Color3.fromRGB(65, 65, 80)
-slider.Text = ""
-slider.AutoButtonColor = false
+slider.BackgroundColor3 = Color3.fromRGB(75, 75, 85)
+slider.BorderSizePixel = 0
 slider.Parent = frame
 
-Instance.new("UICorner", slider).CornerRadius =
-    UDim.new(1, 0)
+local sliderCorner = Instance.new("UICorner")
+sliderCorner.CornerRadius = UDim.new(1, 0)
+sliderCorner.Parent = slider
 
+-- Slider fill
 local fill = Instance.new("Frame")
 fill.Size = UDim2.new(0, 0, 1, 0)
-fill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+fill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 fill.BorderSizePixel = 0
 fill.Parent = slider
 
-Instance.new("UICorner", fill).CornerRadius =
-    UDim.new(1, 0)
+local fillCorner = Instance.new("UICorner")
+fillCorner.CornerRadius = UDim.new(1, 0)
+fillCorner.Parent = fill
 
-local knob = Instance.new("Frame")
-knob.Size = UDim2.new(0, 18, 0, 18)
+-- Slider knob
+local knob = Instance.new("TextButton")
+knob.Size = UDim2.new(0, 20, 0, 20)
 knob.AnchorPoint = Vector2.new(0.5, 0.5)
 knob.Position = UDim2.new(0, 0, 0.5, 0)
 knob.BackgroundColor3 = Color3.new(1, 1, 1)
+knob.Text = ""
 knob.BorderSizePixel = 0
 knob.Parent = slider
 
-Instance.new("UICorner", knob).CornerRadius =
-    UDim.new(1, 0)
+local knobCorner = Instance.new("UICorner")
+knobCorner.CornerRadius = UDim.new(1, 0)
+knobCorner.Parent = knob
 
-local dragging = false
-local currentSpeed = MIN_SPEED
-
-local function setSpeed(speed)
-    currentSpeed = math.clamp(
-        math.floor(speed + 0.5),
-        MIN_SPEED,
-        MAX_SPEED
-    )
-
+-- Apply speed to the character
+local function applySpeed()
     local character = player.Character
-    local humanoid = character and
-        character:FindFirstChildOfClass("Humanoid")
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 
     if humanoid then
         humanoid.WalkSpeed = currentSpeed
     end
-
-    local alpha = (currentSpeed - MIN_SPEED) /
-        (MAX_SPEED - MIN_SPEED)
-
-    fill.Size = UDim2.new(alpha, 0, 1, 0)
-    knob.Position = UDim2.new(alpha, 0, 0.5, 0)
-
-    valueLabel.Text =
-        "Speed: " .. currentSpeed .. " / " .. MAX_SPEED
 end
 
-local function updateFromX(x)
-    local width = slider.AbsoluteSize.X
-    if width <= 0 then return end
-
-    local alpha = math.clamp(
-        (x - slider.AbsolutePosition.X) / width,
+-- Update slider from pointer position
+local function updateSlider(inputPosition)
+    local percent = math.clamp(
+        (inputPosition.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X,
         0,
         1
     )
 
-    setSpeed(MIN_SPEED + alpha *
-        (MAX_SPEED - MIN_SPEED))
+    currentSpeed = math.floor(
+        MIN_SPEED + percent * (MAX_SPEED - MIN_SPEED)
+    )
+
+    fill.Size = UDim2.new(percent, 0, 1, 0)
+    knob.Position = UDim2.new(percent, 0, 0.5, 0)
+    speedLabel.Text = "Speed: " .. currentSpeed
+
+    applySpeed()
 end
+
+knob.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        updateSlider(input.Position)
+    end
+end)
 
 slider.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
-        updateFromX(input.Position.X)
+        updateSlider(input.Position)
     end
 end)
 
@@ -156,7 +138,7 @@ UserInputService.InputChanged:Connect(function(input)
         input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch
     ) then
-        updateFromX(input.Position.X)
+        updateSlider(input.Position)
     end
 end)
 
@@ -167,9 +149,36 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- Hide/show button (remains visible when the menu is hidden)
+local toggle = Instance.new("TextButton")
+toggle.Name = "ToggleMenu"
+toggle.Size = UDim2.new(0, 110, 0, 36)
+toggle.Position = UDim2.new(1, -125, 0, 15)
+toggle.BackgroundColor3 = Color3.fromRGB(0, 130, 220)
+toggle.TextColor3 = Color3.new(1, 1, 1)
+toggle.TextSize = 14
+toggle.Font = Enum.Font.GothamBold
+toggle.Text = "Hide Menu"
+toggle.BorderSizePixel = 0
+toggle.Parent = gui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 8)
+toggleCorner.Parent = toggle
+
+local menuVisible = true
+
+toggle.Activated:Connect(function()
+    menuVisible = not menuVisible
+    frame.Visible = menuVisible
+    toggle.Text = menuVisible and "Hide Menu" or "Show Menu"
+end)
+
+-- Set the slider to the starting speed
+updateSlider(slider.AbsolutePosition + Vector2.new(0, 0))
+
+-- Reapply speed when the character respawns
 player.CharacterAdded:Connect(function(character)
     local humanoid = character:WaitForChild("Humanoid")
     humanoid.WalkSpeed = currentSpeed
 end)
-
-setSpeed(MIN_SPEED)
